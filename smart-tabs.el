@@ -26,6 +26,7 @@
                             indent-tabs-mode)))
     ad-do-it))
 
+;;;###autoload
 (defmacro smart-tabs-advice (function offset)
   `(progn
      (defvaralias ',offset 'tab-width)
