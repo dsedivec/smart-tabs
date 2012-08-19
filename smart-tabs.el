@@ -32,9 +32,9 @@
     ad-do-it))
 
 ;;;###autoload
-(defmacro smart-tabs-advice (function offset)
+(defmacro smart-tabs-advice (function &rest offset-vars)
   `(progn
-     (defvaralias ',offset 'tab-width)
+     ,@(mapcar (lambda (var) `(defvaralias ',var 'tab-width)) offset-vars)
      (defadvice ,function (around smart-tabs activate)
        (cond
          ((and smart-tabs-mode indent-tabs-mode)
