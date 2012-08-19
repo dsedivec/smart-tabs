@@ -3,7 +3,12 @@
 ;;;###autoload
 (define-minor-mode smart-tabs-mode
     "Toggle \"smart tabs\" mode."
-  :lighter " SmTab")
+  :lighter " SmTab"
+  ;; Make sure this has a buffer local value, because we'll be
+  ;; changing it and we don't want other buffers to see our huge
+  ;; outrageous value during indentation processing, as unlikely as
+  ;; that is.
+  (make-local-variable 'tab-width))
 
 (defadvice align (around smart-tabs activate)
   (let ((indent-tabs-mode (if smart-tabs-mode nil indent-tabs-mode)))
@@ -37,9 +42,7 @@
             (beginning-of-line)
             (while (looking-at "\t*\\( +\\)\t+")
               (replace-match "" nil nil nil 1)))
-          (setq tab-width tab-width)
           (let ((tab-width fill-column)
-                (,offset fill-column)
                 (wstart (window-start)))
             (unwind-protect
                  (progn ad-do-it)
