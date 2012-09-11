@@ -45,7 +45,7 @@
           (let ((tab-width fill-column)
                 (wstart (window-start)))
             (unwind-protect
-                 (progn ad-do-it)
+                 ad-do-it
               (set-window-start (selected-window) wstart))))
          (t
           ad-do-it)))))
