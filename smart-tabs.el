@@ -42,11 +42,8 @@
             (beginning-of-line)
             (while (looking-at "\t*\\( +\\)\t+")
               (replace-match "" nil nil nil 1)))
-          (let ((tab-width fill-column)
-                (wstart (window-start)))
-            (unwind-protect
-                 ad-do-it
-              (set-window-start (selected-window) wstart))))
+          (let ((tab-width fill-column))
+            ad-do-it))
          (t
           ad-do-it)))))
 
