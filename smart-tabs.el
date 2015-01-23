@@ -34,7 +34,6 @@
 ;;;###autoload
 (defmacro smart-tabs-advice (function &rest offset-vars)
   `(progn
-     ,@(mapcar (lambda (var) `(defvaralias ',var 'tab-width)) offset-vars)
      (defadvice ,function (around smart-tabs activate)
        (cond
          ((and smart-tabs-mode indent-tabs-mode)
@@ -42,7 +41,8 @@
             (beginning-of-line)
             (while (looking-at "\t*\\( +\\)\t+")
               (replace-match "" nil nil nil 1)))
-          (let ((tab-width fill-column))
+          (let* ((tab-width fill-column)
+                 ,@(mapcar (lambda (var) `(,var tab-width)) offset-vars))
             ad-do-it))
          (t
           ad-do-it)))))
