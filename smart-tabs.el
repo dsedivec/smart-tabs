@@ -62,20 +62,26 @@
     ad-do-it))
 
 ;;;###autoload
-(defmacro smart-tabs-advice (function &rest offset-vars)
-  `(progn
-     (defadvice ,function (around smart-tabs activate)
-       (cond
-         ((and smart-tabs-mode indent-tabs-mode)
-          (save-excursion
-            (beginning-of-line)
-            (while (looking-at "\t*\\( +\\)\t+")
-              (replace-match "" nil nil nil 1)))
-          (let* ((tab-width fill-column)
-                 ,@(mapcar (lambda (var) `(,var tab-width)) offset-vars))
-            ad-do-it))
-         (t
-          ad-do-it)))))
+(defun smart-tabs-advise (function &rest offset-vars)
+  "Advise indentation FUNCTION to enable \"smart tabs\".
+
+OFFSET-VARS is the list of variables that will be temporarily
+updated to achieve the smart tabs effect."
+  (advice-add function :around
+              (eval `(lambda (orig-fun &rest args)
+                       (cond
+                         ((and smart-tabs-mode indent-tabs-mode)
+                          (save-excursion
+                            (beginning-of-line)
+                            (while (looking-at "\t*\\( +\\)\t+")
+                              (replace-match "" nil nil nil 1)))
+                          (let* ((tab-width fill-column)
+                                 ,@(mapcar (lambda (var) `(,var tab-width))
+                                           offset-vars))
+                            (apply orig-fun args)))
+                         (t
+                          (apply orig-fun args)))))
+              '((name . smart-tabs))))
 
 (provide 'smart-tabs)
 ;;; smart-tabs.el ends here
