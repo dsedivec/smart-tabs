@@ -3,7 +3,7 @@
 ;;
 ;; Author: Dale Sedivec <dale@codefu.org>
 ;; Keywords: tools indenting
-;; Version: 2.0
+;; Version: 3
 ;;
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@
 ;; specify more than one offset variable when applying it to a mode.
 ;;
 ;;; Code:
+
+(require 'cl-lib)
 
 ;;;###autoload
 (define-minor-mode smart-tabs-mode
@@ -61,27 +63,34 @@
                             indent-tabs-mode)))
     ad-do-it))
 
+(defvar smart-tabs-advised-functions nil
+  "Alist of advised functions to variables modified by the advice.")
+
 ;;;###autoload
 (defun smart-tabs-advise (function &rest offset-vars)
   "Advise indentation FUNCTION to enable \"smart tabs\".
 
 OFFSET-VARS is the list of variables that will be temporarily
 updated to achieve the smart tabs effect."
-  (advice-add function :around
-              (eval `(lambda (orig-fun &rest args)
-                       (cond
-                         ((and smart-tabs-mode indent-tabs-mode)
-                          (save-excursion
-                            (beginning-of-line)
-                            (while (looking-at "\t*\\( +\\)\t+")
-                              (replace-match "" nil nil nil 1)))
-                          (let* ((tab-width fill-column)
-                                 ,@(mapcar (lambda (var) `(,var tab-width))
-                                           offset-vars))
-                            (apply orig-fun args)))
-                         (t
-                          (apply orig-fun args)))))
-              '((name . smart-tabs))))
+  (let* ((existing-offset-vars (alist-get function
+                                          smart-tabs-advised-functions))
+         (all-offset-vars (cl-nunion existing-offset-vars offset-vars)))
+    (setf (alist-get function smart-tabs-advised-functions) all-offset-vars)
+    (advice-add function :around
+                (eval `(lambda (orig-fun &rest args)
+                         (cond
+                           ((and smart-tabs-mode indent-tabs-mode)
+                            (save-excursion
+                              (beginning-of-line)
+                              (while (looking-at "\t*\\( +\\)\t+")
+                                (replace-match "" nil nil nil 1)))
+                            (let* ((tab-width fill-column)
+                                   ,@(mapcar (lambda (var) `(,var tab-width))
+                                             all-offset-vars))
+                              (apply orig-fun args)))
+                           (t
+                            (apply orig-fun args)))))
+                '((name . smart-tabs)))))
 
 (provide 'smart-tabs)
 ;;; smart-tabs.el ends here
